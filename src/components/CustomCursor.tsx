@@ -76,6 +76,7 @@ const CursorGlobalStyle = createGlobalStyle`
 interface CursorProps {
   cursorSize: number;
   isClicking: boolean;
+  isVisible: boolean;
   color?: string;
 }
 
@@ -93,9 +94,11 @@ const CursorOuter = styled(motion.div)<CursorProps>`
   mix-blend-mode: difference;
   will-change: transform;
   transform-origin: center;
+  opacity: ${props => props.isVisible ? 1 : 0};
+  transition: opacity 0.3s ease;
 `;
 
-const CursorInner = styled(motion.div)<{ isClicking: boolean; color?: string }>`
+const CursorInner = styled(motion.div)<{ isClicking: boolean; isVisible: boolean; color?: string }>`
   position: fixed;
   left: 0;
   top: 0;
@@ -108,6 +111,8 @@ const CursorInner = styled(motion.div)<{ isClicking: boolean; color?: string }>`
   mix-blend-mode: difference;
   will-change: transform;
   transform-origin: center;
+  opacity: ${props => props.isVisible ? 1 : 0};
+  transition: opacity 0.3s ease;
 `;
 
 // Click ripple effect
@@ -159,6 +164,12 @@ const CustomCursor: React.FC = () => {
   const [cursorText, setCursorText] = useState<string | null>(null);
   // State for cursor color
   const [cursorColor, setCursorColor] = useState<string | undefined>(undefined);
+  // State for cursor visibility
+  const [isVisible, setIsVisible] = useState(true);
+  // Timer for idle state
+  const idleTimer = useRef<number | null>(null);
+  // Last mouse position for idle detection
+  const lastPosition = useRef({ x: 0, y: 0 });
   
   useEffect(() => {
     // Check if we're on a device that supports hover
@@ -175,6 +186,26 @@ const CustomCursor: React.FC = () => {
       // Update motion values
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
+      
+      // Show cursor when mouse moves
+      setIsVisible(true);
+      
+      // Reset idle timer
+      if (idleTimer.current !== null) {
+        window.clearTimeout(idleTimer.current);
+      }
+      
+      // Set new idle timer
+      idleTimer.current = window.setTimeout(() => {
+        // Only hide if mouse hasn't moved
+        if (lastPosition.current.x === e.clientX && 
+            lastPosition.current.y === e.clientY) {
+          setIsVisible(false);
+        }
+      }, 3000); // Hide after 3 seconds of inactivity
+      
+      // Update last position
+      lastPosition.current = { x: e.clientX, y: e.clientY };
     };
 
     // Function to handle mouse enter on interactive elements
@@ -185,6 +216,9 @@ const CustomCursor: React.FC = () => {
       if (target.closest('[data-cursor="pointer"]')) {
         setCursorSize(60);
       }
+      
+      // Always show cursor when hovering over interactive elements
+      setIsVisible(true);
     };
 
     // Function to handle mouse leave from interactive elements
@@ -195,6 +229,8 @@ const CustomCursor: React.FC = () => {
     // Function to handle mouse down
     const handleMouseDown = (e: MouseEvent) => {
       setIsClicking(true);
+      setIsVisible(true); // Ensure cursor is visible when clicking
+      
       // Add a new ripple
       const newRipple = {
         id: rippleCounter,
@@ -249,6 +285,12 @@ const CustomCursor: React.FC = () => {
     document.addEventListener('mouseover', handleMouseEnter, { passive: true });
     document.addEventListener('mouseout', handleMouseLeave, { passive: true });
     
+    // Show cursor when window gets focus
+    window.addEventListener('focus', () => setIsVisible(true));
+    
+    // Show cursor when mouse enters window
+    document.addEventListener('mouseenter', () => setIsVisible(true));
+    
     // Set up MutationObserver to watch for changes to body data attributes
     const observer = new MutationObserver(checkCursorAttributes);
     observer.observe(document.body, { 
@@ -266,7 +308,14 @@ const CustomCursor: React.FC = () => {
       window.removeEventListener('mouseup', handleMouseUp);
       document.removeEventListener('mouseover', handleMouseEnter);
       document.removeEventListener('mouseout', handleMouseLeave);
+      window.removeEventListener('focus', () => setIsVisible(true));
+      document.removeEventListener('mouseenter', () => setIsVisible(true));
       observer.disconnect();
+      
+      // Clear idle timer
+      if (idleTimer.current !== null) {
+        window.clearTimeout(idleTimer.current);
+      }
       
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
@@ -297,6 +346,7 @@ const CustomCursor: React.FC = () => {
       <CursorOuter 
         cursorSize={cursorSize} 
         isClicking={isClicking}
+        isVisible={isVisible}
         color={cursorColor}
         style={{ 
           x: mouseX, 
@@ -310,10 +360,11 @@ const CustomCursor: React.FC = () => {
           height: cursorSize,
         }}
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
+        whileInView={{ opacity: isVisible ? 1 : 0 }}
       />
       <CursorInner 
         isClicking={isClicking}
+        isVisible={isVisible}
         color={cursorColor}
         style={{ 
           x: mouseX, 
@@ -325,7 +376,7 @@ const CustomCursor: React.FC = () => {
           scale: isClicking ? 1.2 : 1,
         }}
         initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
+        whileInView={{ opacity: isVisible ? 1 : 0 }}
       />
       <AnimatePresence>
         {ripples.map(ripple => (
@@ -355,7 +406,7 @@ const CustomCursor: React.FC = () => {
         ))}
       </AnimatePresence>
       <AnimatePresence>
-        {cursorText && (
+        {cursorText && isVisible && (
           <CursorLabel
             variants={labelVariants}
             initial="initial"

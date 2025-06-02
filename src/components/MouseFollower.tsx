@@ -10,7 +10,7 @@ interface MouseFollowerProps {
 }
 
 // Container for the mouse follower element
-const FollowerContainer = styled(motion.div)`
+const FollowerContainer = styled(motion.div)<{ isVisible: boolean }>`
   position: fixed;
   top: 0;
   left: 0;
@@ -18,6 +18,8 @@ const FollowerContainer = styled(motion.div)`
   pointer-events: none;
   mix-blend-mode: difference;
   will-change: transform;
+  opacity: ${props => props.isVisible ? 1 : 0};
+  transition: opacity 0.3s ease;
 `;
 
 // The actual visible follower element
@@ -47,7 +49,13 @@ const MouseFollower: React.FC<MouseFollowerProps> = ({
   const [isMobile, setIsMobile] = useState(false);
   const [currentSize, setCurrentSize] = useState(size);
   const [shouldRender, setShouldRender] = useState(true);
+  const [isVisible, setIsVisible] = useState(true);
   const followerRef = useRef<HTMLDivElement>(null);
+  
+  // Idle timer reference
+  const idleTimer = useRef<number | null>(null);
+  // Last position for idle detection
+  const lastPosition = useRef({ x: 0, y: 0 });
   
   // Throttle mouse move updates for better performance
   const lastUpdate = useRef(0);
@@ -67,6 +75,26 @@ const MouseFollower: React.FC<MouseFollowerProps> = ({
       x: prev.x + (clientX - prev.x) * smoothFactor,
       y: prev.y + (clientY - prev.y) * smoothFactor
     }));
+    
+    // Show cursor when mouse moves
+    setIsVisible(true);
+    
+    // Reset idle timer
+    if (idleTimer.current !== null) {
+      window.clearTimeout(idleTimer.current);
+    }
+    
+    // Set new idle timer
+    idleTimer.current = window.setTimeout(() => {
+      // Only hide if mouse hasn't moved
+      if (lastPosition.current.x === clientX && 
+          lastPosition.current.y === clientY) {
+        setIsVisible(false);
+      }
+    }, 3000); // Hide after 3 seconds of inactivity
+    
+    // Update last position
+    lastPosition.current = { x: clientX, y: clientY };
   }, [smoothFactor]);
 
   // Optimized memoized handlers - move before the mobile check
@@ -97,6 +125,9 @@ const MouseFollower: React.FC<MouseFollowerProps> = ({
       setIsHovering(false);
       setTarget(null);
     }
+    
+    // Always show cursor when hovering over interactive elements
+    setIsVisible(true);
   }, []);
 
   const handleMouseLeave = useCallback(() => {
@@ -126,14 +157,33 @@ const MouseFollower: React.FC<MouseFollowerProps> = ({
     if (!shouldRender) return;
     
     window.addEventListener('mousemove', updateMousePosition);
-    return () => window.removeEventListener('mousemove', updateMousePosition);
+    
+    // Show cursor when window gets focus
+    window.addEventListener('focus', () => setIsVisible(true));
+    
+    // Show cursor when mouse enters window
+    document.addEventListener('mouseenter', () => setIsVisible(true));
+    
+    return () => {
+      window.removeEventListener('mousemove', updateMousePosition);
+      window.removeEventListener('focus', () => setIsVisible(true));
+      document.removeEventListener('mouseenter', () => setIsVisible(true));
+      
+      // Clear idle timer
+      if (idleTimer.current !== null) {
+        window.clearTimeout(idleTimer.current);
+      }
+    };
   }, [updateMousePosition, shouldRender]);
 
   // Track mouse clicks - must be called unconditionally
   useEffect(() => {
     if (!shouldRender) return;
     
-    const handleMouseDown = () => setIsClicking(true);
+    const handleMouseDown = () => {
+      setIsClicking(true);
+      setIsVisible(true); // Ensure cursor is visible when clicking
+    };
     const handleMouseUp = () => setIsClicking(false);
 
     window.addEventListener('mousedown', handleMouseDown);
@@ -222,7 +272,7 @@ const MouseFollower: React.FC<MouseFollowerProps> = ({
   if (!shouldRender) return null;
 
   return (
-    <FollowerContainer ref={followerRef}>
+    <FollowerContainer ref={followerRef} isVisible={isVisible}>
       <Follower
         size={size}
         color={color}

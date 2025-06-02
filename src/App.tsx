@@ -267,7 +267,7 @@ function App() {
       <GlobalStyle />
       <CustomCursor />
       <MouseFollower 
-        color="transparent" 
+        color="#FF5722" 
         size={8} 
         smoothFactor={0.15} 
         mobileDisabled={true} 
