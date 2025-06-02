@@ -1,46 +1,91 @@
-# Getting Started with Create React App
+# React Portfolio Template
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A modern, responsive portfolio template for software engineers, featuring beautiful animations and elegant design.
 
-## Available Scripts
+## Preview
 
-In the project directory, you can run:
+This portfolio template includes:
+- Animated Aurora background
+- Modern navigation bar
+- Professional profile card
+- Responsive design that works on all devices
+- Animation effects powered by Framer Motion
 
-### `npm start`
+## Getting Started
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Prerequisites
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- Node.js (v14 or newer)
+- npm or yarn
 
-### `npm test`
+### Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Clone this repository
+```bash
+git clone <repository-url>
+```
 
-### `npm run build`
+2. Navigate to the project directory
+```bash
+cd portfolio-site
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. Install dependencies
+```bash
+npm install
+# or
+yarn install
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+4. Start the development server
+```bash
+npm start
+# or
+yarn start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+5. Open your browser and visit `http://localhost:3000`
 
-### `npm run eject`
+## Customization
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Personal Information
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Edit the profile data in the `Hero.tsx` component to show your personal information:
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+```typescript
+// In src/components/Hero.tsx
+const profileData = {
+  name: "Your Name",
+  description: "Your professional description",
+  imageSrc: "/profile-image.jpg", // Replace with your profile photo
+  stats: {
+    years: X, // Years of experience
+    projects: Y, // Projects completed
+    clients: Z // Clients worked with
+  }
+};
+```
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Profile Photo
 
-## Learn More
+Replace the file at `public/profile-image.jpg` with your own profile photo.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### Color Scheme
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+You can easily change the color scheme by editing the color values in the styled components. The primary color used throughout the template is `#FF5722` (orange).
+
+## Technologies Used
+
+- React
+- TypeScript
+- Styled Components
+- Framer Motion
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Acknowledgments
+
+- Design inspired by modern portfolio trends
+- Aurora background animation based on ReactBits
